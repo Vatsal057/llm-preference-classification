@@ -1356,6 +1356,21 @@ print("tokenization variants required:", NEEDED)
 mtbench_df = None
 if CFG.USE_MTBENCH:
     def _load_mtbench():
+        # Check local offline dataset first (ensures HPC execution works with zero internet)
+        for loc in [
+            os.path.join(BASE_PATH, "mt_bench_human_judgments.parquet"),
+            os.path.join(BASE_PATH, "mt_bench_human_judgments.csv"),
+            "./data/mt_bench_human_judgments.parquet",
+            "../data/mt_bench_human_judgments.parquet",
+            "/kaggle/input/mt-bench-human-judgments/mt_bench_human_judgments.parquet",
+        ]:
+            if os.path.exists(loc):
+                try:
+                    print(f"  loaded MT-Bench locally from: {loc}")
+                    return pd.read_parquet(loc) if loc.endswith(".parquet") else pd.read_csv(loc)
+                except Exception as e0:
+                    print(f"  local load from {loc} failed:", repr(e0)[:200])
+
         try:
             from datasets import load_dataset
 
