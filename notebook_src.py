@@ -1237,6 +1237,8 @@ def fit_cost_model():
         for p in glob.glob(os.path.join(d, "*.json")):
             try:
                 r = json.load(open(p))
+                if not isinstance(r, dict) or "data" not in r or "config" not in r or "timing" not in r:
+                    continue
             except Exception:
                 continue
             n = r["data"]["train_rows_after_augmentation"] * r["config"]["epochs"]
@@ -1491,7 +1493,12 @@ def load_all_runs():
     seen, out = set(), []
     for d in [RESULTS_DIR] + PRIOR_RESULT_DIRS:
         for p in sorted(glob.glob(os.path.join(d, "*.json"))):
-            r = json.load(open(p))
+            try:
+                r = json.load(open(p))
+                if not isinstance(r, dict) or "run_id" not in r:
+                    continue
+            except Exception:
+                continue
             if r["run_id"] in seen:
                 continue
             npz = find_preds(r["run_id"])

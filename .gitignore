@@ -10,6 +10,12 @@ __pycache__/
 data/
 datasets/
 
+# Runtime directories & local artifacts
+failed/
+predictions/
+tokcache/
+*.log
+
 # Checkpoints & Model weights
 *.keras
 *.h5

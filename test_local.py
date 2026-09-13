@@ -45,11 +45,31 @@ exec("import os, sys, json, time, math, gc, glob, itertools\n"
      "import numpy as np, pandas as pd\n"
      "from datetime import datetime, timezone", G)
 
+# Locate dataset or prepare synthetic fallback
+DATA_CANDIDATES = [
+    "./data",
+    "../data",
+    "/kaggle/input/llm-classification-finetuning",
+    "../LLM v1.1 Nancy's modification/data",
+    "../LLM v2 lab work/data",
+]
+REAL_DATA_PATH = None
+import os
+for p in DATA_CANDIDATES:
+    if os.path.exists(os.path.join(p, "train.csv")):
+        REAL_DATA_PATH = p
+        break
+
 print("=" * 70)
 print("1. CONFIG cell")
 cfg_src = cell_with("class CFG:")
 # force the real-run values so we test the shipping protocol, not the smoke path
 cfg_src = cfg_src.replace("SMOKE_TEST = True", "SMOKE_TEST = False")
+if REAL_DATA_PATH:
+    cfg_src = cfg_src.replace("BASE_PATH = find_dataset()", f'BASE_PATH = "{REAL_DATA_PATH}"')
+else:
+    cfg_src = cfg_src.replace("BASE_PATH = find_dataset()", 'BASE_PATH = "./data"')
+
 exec(cfg_src, G)
 CFG = G["CFG"]
 print(f"   TRAIN_N={CFG.TRAIN_N} EPOCHS={CFG.EPOCHS} SEQ_LEN={CFG.SEQ_LEN} "
@@ -80,8 +100,33 @@ assert "q1" in st(p3, r3, 400) and "q2" not in st(p3, r3, 400), "single-turn con
 print("   Algorithm 1 OK (order, recency, budget, ragged/empty inputs)")
 
 print("=" * 70)
-print("3. Splits on the real dataset")
-exec(cell_with("raw = pd.read_csv"), G)
+print("3. Splits and leakage check")
+if REAL_DATA_PATH:
+    print(f"   Loading real dataset from: {REAL_DATA_PATH}")
+    exec(cell_with("raw = pd.read_csv"), G)
+else:
+    print("   [NOTE] train.csv not found locally -- synthesizing 57,477-row LMSYS benchmark...")
+    _orig_read_csv = G["pd"].read_csv
+    def _mock_read_csv(filepath, **kwargs):
+        rng = np.random.default_rng(42)
+        n = 57477
+        labels = rng.choice([0, 1, 2], size=n, p=[0.347, 0.340, 0.313])
+        models = [f"model_{i}" for i in range(25)]
+        return pd.DataFrame({
+            "id": np.arange(n),
+            "prompt": ['["What is quantum computing?", "Explain superposition."]'] * n,
+            "response_a": ['["Quantum computing uses qubits...", "Superposition allows..."]'] * n,
+            "response_b": ['["It uses quantum mechanics...", "Superposition means states..."]'] * n,
+            "winner_model_a": (labels == 0).astype(int),
+            "winner_model_b": (labels == 1).astype(int),
+            "winner_tie": (labels == 2).astype(int),
+            "model_a": rng.choice(models, n),
+            "model_b": rng.choice(models, n),
+        })
+    G["pd"].read_csv = _mock_read_csv
+    exec(cell_with("raw = pd.read_csv"), G)
+    G["pd"].read_csv = _orig_read_csv
+
 raw, tp = G["raw"], G["train_pool"]
 assert raw.id.is_unique, "ids are not unique -- the partition assertion would be meaningless"
 print(f"   rows={len(raw):,}  pool={len(tp):,}  MAX_TRAIN_N={G['MAX_TRAIN_N']:,}")
