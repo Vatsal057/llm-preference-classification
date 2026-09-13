@@ -1,0 +1,579 @@
+{
+    "protocol": {
+        "SMOKE_TEST": false,
+        "TRAIN_N": 12000,
+        "ARCH_TRAIN_N": 5000,
+        "EPOCHS": 3,
+        "SEQ_LEN": 256,
+        "BATCH_SIZE": 16,
+        "LR_MAX": 1.5e-05,
+        "WARMUP_FRAC": 0.1,
+        "SEEDS": [
+            42,
+            1337,
+            2024
+        ],
+        "EVAL_N": 8000,
+        "CALIB_N": 3000,
+        "DEV_N": 2000,
+        "SPLIT_SEED": 20260101,
+        "MAIN_PRESET": "deberta_v3_extra_small_en",
+        "LABEL_SMOOTHING": 0.02,
+        "DROPOUT": 0.1,
+        "HIDDEN": 512,
+        "N_CLASSES": 3,
+        "LABEL2NAME": {
+            "0": "winner_model_a",
+            "1": "winner_model_b",
+            "2": "winner_tie"
+        },
+        "TURN_SEP": " [TURN] ",
+        "RESP_SEP": " [RESPONSE] ",
+        "CHARS_PER_TOKEN": 3.8,
+        "USE_MTBENCH": true,
+        "MTBENCH_MAX": 3500,
+        "SESSION_BUDGET_H": 10.0,
+        "USE_MULTI_GPU": false,
+        "BOOTSTRAP_N": 10000
+    },
+    "environment": {
+        "timestamp_utc": "2026-08-18T06:39:53.075079+00:00",
+        "kaggle_run_type": "Batch",
+        "python": "3.12.13",
+        "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+        "keras": "3.13.2",
+        "keras_backend": "jax",
+        "keras_hub": "0.26.0",
+        "tensorflow": "2.20.0",
+        "jax": "0.7.2",
+        "jaxlib": "0.7.2",
+        "numpy": "2.0.2",
+        "pandas": "2.3.3",
+        "scikit_learn": "1.6.1",
+        "scipy": "1.16.3",
+        "datasets": "5.0.0",
+        "nvidia_smi": "Tesla T4, 580.159.04, 15360 MiB\nTesla T4, 580.159.04, 15360 MiB",
+        "cuda_toolkit": "Build cuda_12.8.r12.8/compiler.35583870_0",
+        "jax_devices": [
+            "cuda:0",
+            "cuda:1"
+        ]
+    },
+    "separator_tokens": {
+        "turn_sep_literal": " [TURN] ",
+        "resp_sep_literal": " [RESPONSE] ",
+        "probe_string": "x [TURN] y [RESPONSE] z",
+        "probe_token_ids": [
+            1,
+            1204,
+            647,
+            100426,
+            592,
+            2982,
+            647,
+            26512,
+            74671,
+            12547,
+            592,
+            6493,
+            2
+        ],
+        "probe_token_strings": [
+            "[CLS]",
+            "\u2581x",
+            "\u2581[",
+            "TURN",
+            "]",
+            "\u2581y",
+            "\u2581[",
+            "RES",
+            "PON",
+            "SE",
+            "]",
+            "\u2581z",
+            "[SEP]"
+        ],
+        "note": "separators are literal text markers segmented by the SentencePiece vocabulary, not reserved special tokens"
+    },
+    "split_sizes": {
+        "train_pool": 44477,
+        "dev": 2000,
+        "calib": 3000,
+        "eval": 8000
+    },
+    "train_rows_used": 12000,
+    "tokenizer_failures": 0,
+    "inference_time_variants": [
+        {
+            "inference rule": "Single input order, single model",
+            "log_loss": 1.0378163392140818,
+            "log_loss_std": 0.0018687574874074284,
+            "accuracy": 0.4659583333333333,
+            "macro_f1": 0.46464768256807926,
+            "relative_inference_cost": 1
+        },
+        {
+            "inference rule": "Symmetrised inference (both orders)",
+            "log_loss": 1.0372263320611428,
+            "log_loss_std": 0.0019103536892678516,
+            "accuracy": 0.46645833333333336,
+            "macro_f1": 0.46521705459383367,
+            "relative_inference_cost": 2
+        },
+        {
+            "inference rule": "Seed ensemble (3 models)",
+            "log_loss": 1.0327622834260959,
+            "log_loss_std": 0.0,
+            "accuracy": 0.467875,
+            "macro_f1": 0.4665033258005737,
+            "relative_inference_cost": 3
+        },
+        {
+            "inference rule": "Seed ensemble + symmetrised",
+            "log_loss": 1.0329482782762895,
+            "log_loss_std": 0.0,
+            "accuracy": 0.4715,
+            "macro_f1": 0.47028473984637853,
+            "relative_inference_cost": 6
+        }
+    ],
+    "table3_matched_comparison": [
+        {
+            "row": "Baseline (no aug, no Siamese)",
+            "name": "noaug_nosiam",
+            "seeds": 3,
+            "train_rows": 12000,
+            "aug_rows": 12000,
+            "epochs": 3,
+            "log_loss": 1.0421865343753138,
+            "log_loss_std": 0.0012686801027779688,
+            "accuracy": 0.46058333333333334,
+            "accuracy_std": 0.006473905956478939,
+            "macro_f1": 0.45317297294915165,
+            "macro_f1_std": 0.0035075768193241945,
+            "log_loss_uncal": 1.0439181842428555
+        },
+        {
+            "row": "+ Siamese fusion only",
+            "name": "noaug_siam",
+            "seeds": 3,
+            "train_rows": 12000,
+            "aug_rows": 12000,
+            "epochs": 3,
+            "log_loss": 1.0424492456527588,
+            "log_loss_std": 0.0027919636325307107,
+            "accuracy": 0.4607916666666667,
+            "accuracy_std": 0.004536885862938737,
+            "macro_f1": 0.45811490357673285,
+            "macro_f1_std": 0.0036215241304995687,
+            "log_loss_uncal": 1.0442372111889837
+        },
+        {
+            "row": "+ Duplicate aug (data volume control)",
+            "name": "dupaug_nosiam",
+            "seeds": 3,
+            "train_rows": 12000,
+            "aug_rows": 24000,
+            "epochs": 3,
+            "log_loss": 1.0462008224148547,
+            "log_loss_std": 0.000656945451377048,
+            "accuracy": 0.4557083333333334,
+            "accuracy_std": 0.0038432841858667454,
+            "macro_f1": 0.45344144044370377,
+            "macro_f1_std": 0.0021153287830104374,
+            "log_loss_uncal": 1.0804412606855627
+        },
+        {
+            "row": "+ Swap aug only",
+            "name": "swapaug_nosiam",
+            "seeds": 3,
+            "train_rows": 12000,
+            "aug_rows": 24000,
+            "epochs": 3,
+            "log_loss": 1.0443383177650747,
+            "log_loss_std": 0.0021072317310341596,
+            "accuracy": 0.46025,
+            "accuracy_std": 0.0039151149408414585,
+            "macro_f1": 0.456509839604295,
+            "macro_f1_std": 0.004308029833681318,
+            "log_loss_uncal": 1.0789321409472672
+        },
+        {
+            "row": "+ Swap aug + Siamese (full model)",
+            "name": "swapaug_siam",
+            "seeds": 3,
+            "train_rows": 12000,
+            "aug_rows": 24000,
+            "epochs": 3,
+            "log_loss": 1.0378163392140818,
+            "log_loss_std": 0.0018687574874074284,
+            "accuracy": 0.4659583333333333,
+            "accuracy_std": 0.005826037103669465,
+            "macro_f1": 0.46464768256807926,
+            "macro_f1_std": 0.004740600463864023,
+            "log_loss_uncal": 1.060816727626093
+        }
+    ],
+    "table3_significance": [
+        {
+            "comparison": "noaug_siam vs baseline",
+            "d_log_loss": -0.0002634515233643775,
+            "ll_ci": "[-0.0025, +0.0021]",
+            "ll_sig": false,
+            "d_acc_pp": 0.4750000000000032,
+            "acc_ci_pp": "[-0.21, +1.16]",
+            "mcnemar_p": 0.19189819315583187,
+            "seed_ttest_p": 0.8655348053778613
+        },
+        {
+            "comparison": "dupaug_nosiam vs baseline",
+            "d_log_loss": 0.0032143419702812537,
+            "ll_ci": "[-0.0002, +0.0064]",
+            "ll_sig": false,
+            "d_acc_pp": -0.10000000000000009,
+            "acc_ci_pp": "[-0.92, +0.74]",
+            "mcnemar_p": 0.8366150237473905,
+            "seed_ttest_p": 0.06420731805906957
+        },
+        {
+            "comparison": "swapaug_nosiam vs baseline",
+            "d_log_loss": 0.002270209055095007,
+            "ll_ci": "[-0.0014, +0.0058]",
+            "ll_sig": false,
+            "d_acc_pp": 0.0,
+            "acc_ci_pp": "[-0.87, +0.86]",
+            "mcnemar_p": 1.0,
+            "seed_ttest_p": 0.20836992614782737
+        },
+        {
+            "comparison": "swapaug_siam vs baseline",
+            "d_log_loss": -0.004127341714644794,
+            "ll_ci": "[-0.0078, -0.0006]",
+            "ll_sig": true,
+            "d_acc_pp": 0.3500000000000003,
+            "acc_ci_pp": "[-0.55, +1.24]",
+            "mcnemar_p": 0.4587615135838318,
+            "seed_ttest_p": 0.054238383734244736
+        }
+    ],
+    "factorial_interaction": {
+        "interaction_log_loss": -0.0061340992463752375,
+        "ci_low": -0.008139424108123855,
+        "ci_high": -0.0041490527852886885,
+        "significant": true,
+        "simple_effect_swap_alone": 0.002270209055095007,
+        "simple_effect_siamese_alone": -0.0002634515233643775,
+        "combined_effect": -0.004127341714644794,
+        "sum_of_simple_effects": 0.0020067575317306297
+    },
+    "isolated_effects": {
+        "position_bias_effect (swap - dup, data volume held constant)": {
+            "log_loss": {
+                "delta": -0.0009441329151862465,
+                "ci_low": -0.0028673334612074443,
+                "ci_high": 0.000933974748813959,
+                "p_bootstrap": 0.3362,
+                "significant": false
+            },
+            "accuracy": {
+                "delta": 0.0010000000000000009,
+                "ci_low": -0.005878125000000014,
+                "ci_high": 0.008124999999999993,
+                "p_bootstrap": 0.7926,
+                "significant": false
+            },
+            "mcnemar": {
+                "b": 404,
+                "c": 412,
+                "p": 0.8064367272243976
+            }
+        },
+        "data_volume_effect (dup - baseline)": {
+            "log_loss": {
+                "delta": 0.0032143419702812537,
+                "ci_low": -0.0001558822115242442,
+                "ci_high": 0.006428493718434679,
+                "p_bootstrap": 0.059,
+                "significant": false
+            },
+            "accuracy": {
+                "delta": -0.0010000000000000009,
+                "ci_low": -0.00924999999999998,
+                "ci_high": 0.00737500000000002,
+                "p_bootstrap": 0.8284,
+                "significant": false
+            },
+            "mcnemar": {
+                "b": 580,
+                "c": 572,
+                "p": 0.8366150237473905
+            }
+        }
+    },
+    "position_bias": [
+        {
+            "model": "Baseline (no swap aug)",
+            "acc_given_winner_A": 0.514500537056928,
+            "acc_given_winner_B": 0.5352833638025594,
+            "position_accuracy_gap_pp": -2.0782826745631366,
+            "acc_given_tie": 0.32928802588996764,
+            "pred_rate_A": 0.36925,
+            "pred_rate_B": 0.390125,
+            "pred_rate_tie": 0.240625,
+            "flip_consistency": 0.8235,
+            "positional_preference_index": -0.003965092079023894,
+            "logloss_original_order": 1.0368896251407405,
+            "logloss_swapped_order": 1.0370055144213577
+        },
+        {
+            "model": "Duplicate aug (no swap)",
+            "acc_given_winner_A": 0.46294307196562834,
+            "acc_given_winner_B": 0.5170018281535649,
+            "position_accuracy_gap_pp": -5.4058756187936545,
+            "acc_given_tie": 0.4045307443365696,
+            "pred_rate_A": 0.32075,
+            "pred_rate_B": 0.37075,
+            "pred_rate_tie": 0.3085,
+            "flip_consistency": 0.810625,
+            "positional_preference_index": -0.003365793641919083,
+            "logloss_original_order": 1.0401039671110217,
+            "logloss_swapped_order": 1.0582921004938224
+        },
+        {
+            "model": "Swap aug only",
+            "acc_given_winner_A": 0.5116362334407447,
+            "acc_given_winner_B": 0.489945155393053,
+            "position_accuracy_gap_pp": 2.1691078047691716,
+            "acc_given_tie": 0.3826860841423948,
+            "pred_rate_A": 0.365625,
+            "pred_rate_B": 0.347875,
+            "pred_rate_tie": 0.2865,
+            "flip_consistency": 0.9095,
+            "positional_preference_index": -0.007726616480406109,
+            "logloss_original_order": 1.0391598341958355,
+            "logloss_swapped_order": 1.0604426950666903
+        },
+        {
+            "model": "Full model (swap + Siamese)",
+            "acc_given_winner_A": 0.49194414607948445,
+            "acc_given_winner_B": 0.48080438756855576,
+            "position_accuracy_gap_pp": 1.1139758510928688,
+            "acc_given_tie": 0.42637540453074435,
+            "pred_rate_A": 0.343875,
+            "pred_rate_B": 0.335375,
+            "pred_rate_tie": 0.32075,
+            "flip_consistency": 0.92025,
+            "positional_preference_index": -0.006117635431744365,
+            "logloss_original_order": 1.0327622834260957,
+            "logloss_swapped_order": 1.0485690054691479
+        }
+    ],
+    "calibration": [
+        {
+            "seed": 2024,
+            "method": "uncalibrated",
+            "T": null,
+            "eval_log_loss": 1.062110085095676,
+            "eval_accuracy": 0.460375,
+            "eval_ece": 0.07250690980195072
+        },
+        {
+            "seed": 2024,
+            "method": "global T (held-out fit)",
+            "T": [
+                1.7307
+            ],
+            "eval_log_loss": 1.039915740676854,
+            "eval_accuracy": 0.460375,
+            "eval_ece": 0.011999120210887212
+        },
+        {
+            "seed": 2024,
+            "method": "per-class T (held-out fit)",
+            "T": [
+                1.777,
+                1.8502,
+                1.4449
+            ],
+            "eval_log_loss": 1.0372474677939996,
+            "eval_accuracy": 0.46475,
+            "eval_ece": 0.006353720257446463
+        },
+        {
+            "seed": 1337,
+            "method": "uncalibrated",
+            "T": null,
+            "eval_log_loss": 1.0580992350770275,
+            "eval_accuracy": 0.4655,
+            "eval_ece": 0.06968281556765553
+        },
+        {
+            "seed": 1337,
+            "method": "global T (held-out fit)",
+            "T": [
+                1.5998
+            ],
+            "eval_log_loss": 1.0371986566192641,
+            "eval_accuracy": 0.4655,
+            "eval_ece": 0.007326712610155439
+        },
+        {
+            "seed": 1337,
+            "method": "per-class T (held-out fit)",
+            "T": [
+                1.6566,
+                1.6911,
+                1.3985
+            ],
+            "eval_log_loss": 1.035597960794027,
+            "eval_accuracy": 0.467625,
+            "eval_ece": 0.0067404672303264974
+        },
+        {
+            "seed": 42,
+            "method": "uncalibrated",
+            "T": null,
+            "eval_log_loss": 1.0622408627055757,
+            "eval_accuracy": 0.472,
+            "eval_ece": 0.07131241131412082
+        },
+        {
+            "seed": 42,
+            "method": "global T (held-out fit)",
+            "T": [
+                1.7168
+            ],
+            "eval_log_loss": 1.0363346203461274,
+            "eval_accuracy": 0.472,
+            "eval_ece": 0.015552333004201295
+        },
+        {
+            "seed": 42,
+            "method": "per-class T (held-out fit)",
+            "T": [
+                1.7548,
+                1.814,
+                1.5545
+            ],
+            "eval_log_loss": 1.0354504693141717,
+            "eval_accuracy": 0.4725,
+            "eval_ece": 0.012813310115476846
+        }
+    ],
+    "table4_architectures": [
+        {
+            "model": "deberta-v3-extra-small (ours)",
+            "params_M": 71.3,
+            "backbone_M": 70.7,
+            "seeds": 1,
+            "log_loss": 1.0461131674791577,
+            "log_loss_std": 0.0,
+            "accuracy": 0.4575,
+            "accuracy_std": 0.0,
+            "macro_f1": 0.4491603719787795,
+            "train_min": 28.6,
+            "infer_ms": 14.49
+        },
+        {
+            "model": "bert-base",
+            "params_M": 110.7,
+            "backbone_M": 109.5,
+            "seeds": 2,
+            "log_loss": 1.064389323745194,
+            "log_loss_std": 0.0011417346216032877,
+            "accuracy": 0.42437499999999995,
+            "accuracy_std": 0.0003535533905932741,
+            "macro_f1": 0.4246426366649674,
+            "train_min": 57.3,
+            "infer_ms": 37.48
+        }
+    ],
+    "table7_ablation": [
+        {
+            "component_removed": "Full model",
+            "log_loss": 1.0378163392140818,
+            "log_loss_std": 0.0018687574874074284,
+            "accuracy": 0.4659583333333333,
+            "delta_log_loss": 0.0,
+            "ci": "-",
+            "significant": "-"
+        },
+        {
+            "component_removed": "- Swap augmentation (vs. volume-matched dup)",
+            "log_loss": 1.0462008224148547,
+            "log_loss_std": 0.000656945451377048,
+            "accuracy": 0.4557083333333334,
+            "delta_log_loss": 0.007341683684926048,
+            "ci": "[+0.0046, +0.0101]",
+            "significant": true
+        },
+        {
+            "component_removed": "- Siamese fusion |e_A - e_B|",
+            "log_loss": 1.0443383177650747,
+            "log_loss_std": 0.0021072317310341596,
+            "accuracy": 0.46025,
+            "delta_log_loss": 0.0063975507697398015,
+            "ci": "[+0.0042, +0.0086]",
+            "significant": true
+        },
+        {
+            "component_removed": "- Multi-turn context",
+            "log_loss": 1.0440400748317478,
+            "log_loss_std": 0.0010642139415670087,
+            "accuracy": 0.4503333333333333,
+            "delta_log_loss": 0.007005168963759134,
+            "ci": "[+0.0018, +0.0124]",
+            "significant": true
+        },
+        {
+            "component_removed": "- Temperature calibration (post hoc)",
+            "log_loss": 1.060816727626093,
+            "log_loss_std": 0.0023543258082692844,
+            "accuracy": 0.4659583333333333,
+            "delta_log_loss": 0.02300038841201113,
+            "ci": "see 10.5",
+            "significant": "see 10.5"
+        }
+    ],
+    "data_efficiency": [
+        {
+            "train_rows": 12000,
+            "augmented_rows": 24000,
+            "seeds": 3,
+            "log_loss": 1.0378163392140818,
+            "log_loss_std": 0.0018687574874074284,
+            "accuracy": 0.4659583333333333,
+            "accuracy_std": 0.005826037103669465,
+            "pct_of_best": 100.0
+        }
+    ],
+    "generalization": [
+        {
+            "model": "Full model",
+            "eval_log_loss": 1.0378163392140818,
+            "eval_accuracy": 0.4659583333333333,
+            "unseen_pairs_n": 102,
+            "unseen_pairs_log_loss": 1.003758602220337,
+            "unseen_pairs_accuracy": 0.5163398692810457,
+            "mtbench_n": 3355,
+            "mtbench_accuracy": 0.5184302036761054,
+            "mtbench_accuracy_std": 0.008055046223033999,
+            "mtbench_macro_f1": 0.514486758130853,
+            "mtbench_log_loss": 0.9850389027894293
+        },
+        {
+            "model": "Baseline",
+            "eval_log_loss": 1.0421865343753138,
+            "eval_accuracy": 0.46058333333333334,
+            "unseen_pairs_n": 102,
+            "unseen_pairs_log_loss": 1.028529575340685,
+            "unseen_pairs_accuracy": 0.5163398692810458,
+            "mtbench_n": 3355,
+            "mtbench_accuracy": 0.5114754098360655,
+            "mtbench_accuracy_std": 0.016818761227619515,
+            "mtbench_macro_f1": 0.5054563843218318,
+            "mtbench_log_loss": 0.9924524030545626
+        }
+    ],
+    "n_runs_completed": 38
+}

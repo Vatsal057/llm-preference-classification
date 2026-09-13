@@ -1,0 +1,291 @@
+% =====================================================================
+% Final tables for APIN-D-26-05359 revision
+% All values: corrected leakage-free protocol, 8,000-row held-out eval set.
+% Main tables: 12,000 training rows, 3 epochs, 3 seeds (42/1337/2024).
+% Backbone comparison: 5,000 training rows, 3 epochs, 2 seeds.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% Table 3 replacement: matched-condition comparison
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Matched-condition comparison. All rows use identical training data, epochs,
+learning-rate schedule and random seeds; only the marked component differs. The
+duplicate-augmentation row doubles the training set without any positional change and therefore
+isolates data volume from position-bias mitigation. Values are mean $\pm$ standard deviation over
+three seeds on a held-out set of 8{,}000 examples.}
+\label{tab:main_results}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Train rows} & \textbf{Epochs} & \textbf{Log Loss} & \textbf{Accuracy} & \textbf{Macro F1} \\
+\midrule
+Baseline (no aug., no Siamese)          & 12,000 & 3 & 1.0422 $\pm$ 0.0013 & 46.06\% $\pm$ 0.65 & 45.32\% $\pm$ 0.35 \\
+\quad + Siamese fusion only             & 12,000 & 3 & 1.0424 $\pm$ 0.0028 & 46.08\% $\pm$ 0.45 & 45.81\% $\pm$ 0.36 \\
+\quad + Duplicate aug. (volume control) & 24,000 & 3 & 1.0462 $\pm$ 0.0007 & 45.57\% $\pm$ 0.38 & 45.34\% $\pm$ 0.21 \\
+\quad + Swap aug. only                  & 24,000 & 3 & 1.0443 $\pm$ 0.0021 & 46.02\% $\pm$ 0.39 & 45.65\% $\pm$ 0.43 \\
+\textbf{\quad + Swap aug. + Siamese}    & 24,000 & 3 & \textbf{1.0378 $\pm$ 0.0019} & \textbf{46.60\% $\pm$ 0.58} & \textbf{46.46\% $\pm$ 0.47} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Significance
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Statistical comparison against the matched baseline. Confidence intervals are from a
+paired bootstrap over 10{,}000 resamples of the evaluation set; the seed-level $t$-test is paired
+over the three shared random seeds. Only the full model differs significantly from the baseline,
+and only in log loss.}
+\label{tab:significance}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{$\Delta$ Log Loss} & \textbf{95\% CI} & \textbf{McNemar $p$} & \textbf{Seed $t$-test $p$} \\
+\midrule
+Siamese fusion only & $-0.0003$ & $[-0.0025, +0.0021]$ & 0.192 & 0.866 \\
+Duplicate aug.      & $+0.0032$ & $[-0.0002, +0.0064]$ & 0.837 & 0.064 \\
+Swap aug.\ only     & $+0.0023$ & $[-0.0014, +0.0058]$ & 1.000 & 0.208 \\
+\textbf{Swap aug.\ + Siamese} & $\mathbf{-0.0041}$ & $\mathbf{[-0.0078, -0.0006]}$ & 0.459 & 0.054 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Factorial decomposition
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Factorial decomposition of the two proposed components in log loss (negative is better).
+Neither component improves performance in isolation, while their combination does; the interaction
+term is significantly super-additive.}
+\label{tab:interaction}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Effect} & \textbf{$\Delta$ Log Loss} & \textbf{95\% CI} \\
+\midrule
+Swap augmentation alone       & $+0.0023$ & $[-0.0014, +0.0058]$ \\
+Siamese fusion alone          & $-0.0003$ & $[-0.0025, +0.0021]$ \\
+Sum of simple effects         & $+0.0020$ & --- \\
+Combined effect               & $-0.0041$ & $[-0.0078, -0.0006]$ \\
+\midrule
+\textbf{Interaction}          & $\mathbf{-0.0061}$ & $\mathbf{[-0.0081, -0.0041]}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Position bias (replaces Figure 9b)
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Position-bias analysis. Acc$\mid$A and Acc$\mid$B are accuracy restricted to examples
+whose true winner is Model~A and Model~B respectively. Flip consistency is the fraction of examples
+whose prediction is the exact mirror image when the two responses are exchanged at the input; a
+position-invariant classifier scores 1.000. The duplicate-augmentation control shows that the gain
+comes from positional symmetry rather than from the doubled data volume.}
+\label{tab:position}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Acc$\mid$A} & \textbf{Acc$\mid$B} & \textbf{Gap (pp)} & \textbf{Flip cons.} \\
+\midrule
+Baseline (no swap aug.)          & 51.45\% & 53.53\% & $-2.08$ & 0.8235 \\
+Duplicate aug.\ (volume control) & 46.29\% & 51.70\% & $-5.41$ & 0.8106 \\
+Swap aug.\ only                  & 51.16\% & 48.99\% & $+2.17$ & 0.9095 \\
+\textbf{Full model}              & 49.19\% & 48.08\% & $\mathbf{+1.11}$ & \textbf{0.9203} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Table 4 replacement: backbones
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Alternative backbones under identical conditions: the same 5{,}000-row swap-augmented
+training set, the same three epochs, the same learning-rate schedule and the same two random seeds;
+only the backbone differs. This table uses a smaller training set than
+Table~\ref{tab:main_results} because the larger backbones cost roughly three times more per sample.
+Under this shared budget the larger models overfit after the first epoch, and final-epoch weights
+are reported for every model.}
+\label{tab:comparison}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Backbone} & \textbf{Params} & \textbf{Log Loss} & \textbf{Accuracy} & \textbf{Train (min)} & \textbf{Infer.\ (ms)} \\
+\midrule
+BERT-base            & 110.7M & 1.0644 $\pm$ 0.0011 & 42.44\% $\pm$ 0.04 & 57.3 & 37.5 \\
+RoBERTa-base         & 125.2M & 1.0570 $\pm$ 0.0015 & 43.86\% $\pm$ 0.28 & 53.6 & 34.3 \\
+DeBERTa-v3-small     & 142.5M & 1.0582 $\pm$ 0.0011 & 43.24\% $\pm$ 0.43 & 39.6 & 21.8 \\
+\midrule
+\textbf{DeBERTa-v3-extra-small (ours)} & \textbf{71.3M} & \textbf{1.0465 $\pm$ 0.0005} & \textbf{45.23\% $\pm$ 0.73} & \textbf{28.1} & \textbf{14.1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Table 7 replacement: leave-one-out ablation
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Leave-one-out ablation with paired-bootstrap confidence intervals. A positive $\Delta$
+means removing the component degrades performance. The swap-augmentation row is measured against a
+duplicate-augmentation control of identical data volume, so it reports position-bias mitigation
+alone. Every component is significant when removed from the full model, although none improves
+performance in isolation (Table~\ref{tab:interaction}).}
+\label{tab:ablation}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Component removed} & \textbf{Log Loss} & \textbf{$\Delta$} & \textbf{95\% CI} \\
+\midrule
+Full model                                & 1.0378 $\pm$ 0.0019 & ---       & --- \\
+$-$ Swap aug.\ (vs.\ volume-matched ctrl.) & 1.0462 & $+0.0073$ & $[+0.0046, +0.0101]$ \\
+$-$ Siamese fusion $|e_A - e_B|$          & 1.0443 & $+0.0064$ & $[+0.0042, +0.0086]$ \\
+$-$ Multi-turn context                    & 1.0440 & $+0.0070$ & $[+0.0018, +0.0124]$ \\
+$-$ Temperature calibration (post hoc)    & 1.0608 & $+0.0230$ & see Table~\ref{tab:calibration} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Calibration
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Confidence calibration. The temperature is fitted on a disjoint 3{,}000-example
+calibration split and applied unchanged to the evaluation set, so no calibration parameter is
+tuned on reported data. Per-class scaling improves expected calibration error consistently, but its
+log-loss gain (0.0017) is smaller than the seed-to-seed standard deviation (0.0019); the single
+global temperature is therefore retained. Mean over three seeds.}
+\label{tab:calibration}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Method} & \textbf{Parameters} & \textbf{Log Loss} & \textbf{ECE} \\
+\midrule
+Uncalibrated                          & 0 & 1.0608 & 0.0712 \\
+Global temperature ($T = 1.682$)      & 1 & 1.0378 & 0.0116 \\
+Per-class temperature                 & 3 & 1.0361 & 0.0086 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Data efficiency
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Data efficiency. ``\% of best'' is the ratio of the best achieved log loss to the log loss
+at that training-set size. Thirty per cent of the training data recovers 98.6\% of the best
+performance.}
+\label{tab:efficiency}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Train rows} & \textbf{Augmented} & \textbf{Log Loss} & \textbf{Accuracy} & \textbf{\% of best} \\
+\midrule
+1,200  & 2,400  & 1.0784 $\pm$ 0.0062 & 41.58\% $\pm$ 1.34 & 96.2\% \\
+3,600  & 7,200  & 1.0525 $\pm$ 0.0030 & 44.65\% $\pm$ 0.74 & 98.6\% \\
+7,200  & 14,400 & 1.0427 $\pm$ 0.0022 & 46.02\% $\pm$ 0.94 & 99.5\% \\
+12,000 & 24,000 & 1.0378 $\pm$ 0.0019 & 46.60\% $\pm$ 0.58 & 100.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Generalization
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Zero-shot transfer to MT-Bench Human Judgments (3{,}355 human preference judgments with
+the same three-class label space, different annotators and a different model population). No
+fine-tuning is performed on the transfer set. The majority-class floor is 38.54\%. Class priors
+differ between the two datasets, so accuracy and macro F1 are the comparable metrics.}
+\label{tab:generalization}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{Macro F1} & \textbf{Log Loss} \\
+\midrule
+Majority-class floor & 38.54\% & --- & --- \\
+Baseline             & 51.15\% $\pm$ 1.68 & 50.55\% & 0.9925 \\
+\textbf{Full model}  & \textbf{51.84\% $\pm$ 0.81} & \textbf{51.45\%} & \textbf{0.9850} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Inference-time variants
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Inference-time variants of the same trained models, requiring no additional training.
+Symmetrised inference averages the predictions obtained from both response orderings and therefore
+makes the classifier exactly position-invariant by construction, at twice the inference cost.}
+\label{tab:inference}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Inference rule} & \textbf{Log Loss} & \textbf{Accuracy} & \textbf{Rel.\ cost} \\
+\midrule
+Single input order, single model        & 1.0378 & 46.60\% & $1\times$ \\
+Symmetrised inference (both orders)     & 1.0372 & 46.65\% & $2\times$ \\
+Seed ensemble (3 models)                & 1.0328 & 46.79\% & $3\times$ \\
+Seed ensemble + symmetrised             & 1.0329 & \textbf{47.15\%} & $6\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Per-class performance
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Per-class performance of the full model on the held-out evaluation set. The two
+positional classes perform almost identically (F1 48.25\% and 47.51\%), consistent with the
+position-invariance results in Table~\ref{tab:position}.}
+\label{tab:perclass}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Support} \\
+\midrule
+Model A wins & 49.51\% & 47.05\% & 48.25\% & 2,793 \\
+Model B wins & 48.19\% & 46.84\% & 47.51\% & 2,735 \\
+Tie          & 40.48\% & 44.01\% & 42.17\% & 2,472 \\
+\midrule
+\textbf{Macro avg} & 46.06\% & 45.97\% & 45.97\% & 8,000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Hyperparameters (replaces the old hyperparameter table)
+% ---------------------------------------------------------------------
+\begin{table}[!htbp]
+\centering
+\caption{Experimental configuration. Splits are drawn from the 57{,}477 original interactions by
+identifier with a fixed seed and are mutually disjoint; augmentation is applied to the training
+split only.}
+\label{tab:hyperparams}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Backbone                     & DeBERTa-v3-extra-small \\
+Parameters (total / backbone) & 71.3M / 70.7M \\
+Sequence length              & 256 \\
+Training rows                & 12,000 (24,000 after swap augmentation) \\
+Dev / calibration / evaluation & 2,000 / 3,000 / 8,000 \\
+Epochs                       & 3 \\
+Batch size                   & 16 \\
+Optimiser                    & Adam, warmup $+$ cosine, peak $1.5 \times 10^{-5}$ \\
+Label smoothing              & 0.02 \\
+Dropout                      & 0.1 \\
+Classifier hidden units      & 512 \\
+Random seeds                 & 42, 1337, 2024 \\
+Calibration temperature      & 1.682 (fitted on the calibration split) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% Reproducibility (R2-4)
+% ---------------------------------------------------------------------
+% Python 3.12.13; Keras 3.13.2 (JAX backend); keras-hub 0.26.0; TensorFlow 2.20.0;
+% JAX/jaxlib 0.7.2; NumPy 2.0.2; pandas 2.3.3; scikit-learn 1.6.1; SciPy 1.16.3;
+% CUDA 12.8; 2 x NVIDIA Tesla T4 (16 GB), driver 580.159.04.

@@ -1,0 +1,20 @@
+# Core Deep Learning Framework
+keras>=3.13.0
+keras-hub>=0.26.0
+jax>=0.7.0
+jaxlib>=0.7.0
+tensorflow>=2.20.0
+
+# Scientific & Data Processing
+numpy>=2.0.0
+scipy>=1.16.0
+scikit-learn>=1.6.0
+pandas>=2.2.0
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Development & Notebook Utilities
+jupytext>=1.16.0
+notebook>=7.0.0
