@@ -156,7 +156,7 @@ As documented in Section 4.1 of the paper:
 ```bibtex
 @article{vaghasiya2026efficient,
   title={Efficient LLM Preference Classification Through Position Bias Mitigation and Architectural Symmetry},
-  author={Vaghasiya, Vatsal and Kshetrimayum, Nancy and Prabadevi, B. and Prathap, Boppuru Rudra},
+  author={Vatsal Vaghasiya and Nancy Kshetrimayum and B. Prabadevi and Boppuru Rudra Prathap},
   journal={Applied Intelligence},
   year={2026},
   note={Manuscript APIN-D-26-05359}
