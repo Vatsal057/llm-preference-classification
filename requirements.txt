@@ -1,17 +1,25 @@
-# Core Deep Learning Framework
-keras>=3.13.0
-keras-hub>=0.26.0
-jax>=0.7.0
-jaxlib>=0.7.0
-tensorflow>=2.20.0
+# Reference Environment (Recorded in paper_results.json):
+# Python: 3.12.13 | Linux 6.12.90+ x86_64 glibc 2.35
+# CUDA Toolkit: 12.8 (Driver 580.159.04) | Backend: JAX
+# cuDNN: recorded automatically into results/paper_results.json ["environment"]["cudnn"]
+#        by notebook_src.py at run time. The 2026-08-18 session predates that capture,
+#        so quote the value from the run that produces the final tables.
+
+# Core Deep Learning Framework (pinned to exact experimental versions)
+keras==3.13.2
+keras-hub==0.26.0
+jax==0.7.2
+jaxlib==0.7.2
+tensorflow==2.20.0
 
 # Scientific & Data Processing
-numpy>=2.0.0
-scipy>=1.16.0
-scikit-learn>=1.6.0
-pandas>=2.2.0
+numpy==2.0.2
+scipy==1.16.3
+scikit-learn==1.6.1
+pandas==2.3.3
+datasets==5.0.0
 
-# Visualization
+# Visualization & Reporting
 matplotlib>=3.8.0
 seaborn>=0.13.0
 

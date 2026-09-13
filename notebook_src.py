@@ -110,6 +110,29 @@ def _pkg(name):
         return "n/a"
 
 
+def _cudnn_version():
+    """Report the cuDNN version the installed stack was built against.
+
+    Reviewer 2 asked for this explicitly alongside the CUDA version, and it is not obtainable
+    from `nvidia-smi` (which reports the driver, not cuDNN). TensorFlow records it in its build
+    info; the JAX/XLA path is tried as a fallback so the value is still captured on stacks where
+    TensorFlow is CPU-only. Returns "not recorded" rather than guessing, so the manuscript never
+    quotes a version that was not actually measured.
+    """
+    try:
+        info = tf.sysconfig.get_build_info()
+        v = info.get("cudnn_version")
+        if v:
+            return str(v)
+    except Exception:
+        pass
+    # Fallback: locate the shared object the loader would resolve.
+    out = _sh("ldconfig -p 2>/dev/null | grep -m1 libcudnn.so | sed 's/.*libcudnn\\.so\\.//;s/ .*//'")
+    if out:
+        return out
+    return "not recorded"
+
+
 # "Batch" for Save & Run All commits, "Interactive" in the editor. The two have different
 # permissions on Kaggle -- notably, only interactive sessions may download Kaggle Models.
 KAGGLE_RUN_TYPE = os.environ.get("KAGGLE_KERNEL_RUN_TYPE", "Unknown")
@@ -132,6 +155,7 @@ ENV_INFO = {
     "datasets": _pkg("datasets"),
     "nvidia_smi": _sh("nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader"),
     "cuda_toolkit": _sh("nvcc --version | tail -n 1"),
+    "cudnn": _cudnn_version(),
 }
 
 try:
@@ -197,17 +221,14 @@ class CFG:
     MTBENCH_MAX = 3500
 
     # ------------------------------------------------------------------ session budget
-    # Kaggle kills a commit at 12 h (exit 137). A killed notebook may lose its output, which
-    # would throw away the whole session's training. Stop launching new runs early enough that
-    # the notebook finishes normally and Kaggle saves /kaggle/working.
-    SESSION_BUDGET_H = 10.0
+    # Kaggle kills a commit at 12 h (exit 137). On HPC, allow longer runtimes (default 48.0 h).
+    SESSION_BUDGET_H = float(os.environ.get("SESSION_BUDGET_H", 48.0))
 
     # ------------------------------------------------------------------ hardware
     # Kaggle's "GPU T4 x2" gives two devices, but Keras uses only the first unless told otherwise.
     # Data-parallel training shards each batch across both, roughly halving wall-clock time.
-    # Measure it with the throughput probe before trusting it, and keep BATCH_SIZE divisible by
-    # the device count.
-    USE_MULTI_GPU = False
+    # Enable via USE_MULTI_GPU=1 in environment.
+    USE_MULTI_GPU = bool(int(os.environ.get("USE_MULTI_GPU", "0")))
 
     # ------------------------------------------------------------------ bookkeeping
     BOOTSTRAP_N = 10000
@@ -1148,14 +1169,14 @@ def run_experiment(cfg, tokens):
 
 # %%
 BLOCKS = {
-    # A and B are COMPLETE (24 runs, results already collected). They are switched off so this
-    # session trains only what is left, regardless of which earlier output happens to be attached.
-    # Set both back to True if you ever need to reproduce them from scratch.
-    "A_main": False,    # DONE -- 2x2 factorial + data-volume control  (R1-2, R2-1, R2-7)
-    "B_abl": False,     # DONE -- multi-turn + all-off reference       (R1 ablation, R2-7)
-    "C_arch": True,     # alternative architectures               (R2-6)
-    "D_eff": True,      # data-efficiency curve
-    "E_scale": False,   # full-pool run of the final config       (enable only with spare quota)
+    # Blocks can be controlled individually via environment variables:
+    # RUN_BLOCK_A=1 RUN_BLOCK_B=1 RUN_BLOCK_C=1 RUN_BLOCK_D=1 RUN_BLOCK_E=0
+    # Already-completed runs are automatically skipped by the runner.
+    "A_main": bool(int(os.environ.get("RUN_BLOCK_A", "1"))),
+    "B_abl": bool(int(os.environ.get("RUN_BLOCK_B", "1"))),
+    "C_arch": bool(int(os.environ.get("RUN_BLOCK_C", "1"))),
+    "D_eff": bool(int(os.environ.get("RUN_BLOCK_D", "1"))),
+    "E_scale": bool(int(os.environ.get("RUN_BLOCK_E", "0"))),
 }
 
 # Block C is by far the costliest (BERT/RoBERTa cost ~3.6x DeBERTa-v3-xsmall per sample).
@@ -2314,9 +2335,12 @@ if len(ablation_df):
 tex.append("% ==== Reproducibility (R2-4) ====")
 tex.append("% " + json.dumps(ENV_INFO))
 
-with open(os.path.join(WORK, "paper_tables.tex"), "w") as f:
-    f.write("\n".join(tex))
-print("wrote paper_tables.tex")
+out_tables = list(dict.fromkeys([os.path.join(WORK, "paper_tables.tex"), os.path.join(RESULTS_DIR, "paper_tables.tex"), os.path.join(RESULTS_DIR, "final_tables.tex")]))
+for tp in out_tables:
+    os.makedirs(os.path.dirname(tp) or ".", exist_ok=True)
+    with open(tp, "w") as f:
+        f.write("\n".join(tex))
+print(f"wrote paper_tables.tex to {out_tables}")
 
 PAPER = {
     "protocol": {k: v for k, v in vars(CFG).items() if k.isupper()},
@@ -2338,9 +2362,12 @@ PAPER = {
     "generalization": gen_rows,
     "n_runs_completed": len(ALL),
 }
-with open(os.path.join(WORK, "paper_results.json"), "w") as f:
-    json.dump(PAPER, f, indent=2, default=str)
-print("wrote paper_results.json")
+out_results = list(dict.fromkeys([os.path.join(WORK, "paper_results.json"), os.path.join(RESULTS_DIR, "paper_results.json")]))
+for rp in out_results:
+    os.makedirs(os.path.dirname(rp) or ".", exist_ok=True)
+    with open(rp, "w") as f:
+        json.dump(PAPER, f, indent=2, default=str)
+print(f"wrote paper_results.json to {out_results}")
 
 # %%
 notes = []

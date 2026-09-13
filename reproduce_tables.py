@@ -11,6 +11,7 @@ Usage:
     python3 reproduce_tables.py
 """
 
+import argparse
 import json
 import os
 import sys
@@ -126,19 +127,43 @@ def reproduce_table6_calibration(data):
 
 def reproduce_table4_architectures(data):
     print_header("TABLE 4: Backbone Efficiency Comparison (5,000 Training Rows, 3 Epochs)")
-    headers = ["Backbone Architecture", "Params (M)", "Backbone (M)", "Log Loss", "Accuracy (%)", "Train (min)", "Infer (ms)"]
+    headers = ["Backbone Architecture", "Params (M)", "Backbone (M)", "Seeds", "Log Loss", "Accuracy (%)", "Train (min)", "Infer (ms)"]
     rows = []
     for r in data["table4_architectures"]:
         name = r["model"]
         tot_m = f"{r['params_M']:.1f}M"
         bb_m = f"{r['backbone_M']:.1f}M"
+        seeds = str(r.get("seeds", 1))
         ll = f"{r['log_loss']:.4f} ± {r['log_loss_std']:.4f}"
         acc = f"{r['accuracy']*100:.2f}% ± {r['accuracy_std']*100:.2f}"
         tr = f"{r['train_min']:.1f}"
         inf = f"{r['infer_ms']:.2f}"
-        rows.append([name, tot_m, bb_m, ll, acc, tr, inf])
+        rows.append([name, tot_m, bb_m, seeds, ll, acc, tr, inf])
 
     format_table(headers, rows)
+    if len(rows) < 4:
+        print(f"\n  [NOTE] {len(rows)}/4 backbones currently present. Remaining backbones require Block C HPC run.")
+
+
+def reproduce_data_efficiency(data):
+    print_header("DATA EFFICIENCY CURVE (Varying Training Set Size, 3 Epochs)")
+    headers = ["Train Rows", "Augmented Rows", "Seeds", "Log Loss", "Accuracy (%)", "% of Best"]
+    rows = []
+    eff = data.get("data_efficiency", [])
+    if isinstance(eff, dict):
+        eff = [eff]
+    for r in eff:
+        tr = f"{r['train_rows']:,}"
+        ar = f"{r.get('augmented_rows', r['train_rows']*2):,}"
+        s = str(r.get("seeds", 3))
+        ll = f"{r['log_loss']:.4f}" + (f" ± {r['log_loss_std']:.4f}" if "log_loss_std" in r else "")
+        acc = f"{r['accuracy']*100:.2f}%" + (f" ± {r['accuracy_std']*100:.2f}" if "accuracy_std" in r else "")
+        pct = f"{r.get('pct_of_best', 100.0):.1f}%"
+        rows.append([tr, ar, s, ll, acc, pct])
+
+    format_table(headers, rows)
+    if len(rows) < 4:
+        print(f"\n  [NOTE] {len(rows)}/4 fraction points currently present. Fractional curves (10%, 30%, 60%) require Block D HPC run.")
 
 
 def reproduce_table7_ablation(data):
@@ -171,7 +196,7 @@ def reproduce_generalization(data):
     format_table(headers, rows)
 
 
-def verify_claims(data):
+def verify_claims(data, strict=False):
     print_header("AUTOMATED PROGRAMMATIC VERIFICATION OF MANUSCRIPT CLAIMS")
     
     # 1. Full model log loss improvement
@@ -211,10 +236,42 @@ def verify_claims(data):
     assert mt_acc > 0.51, f"MT-bench accuracy should exceed 51%, got {mt_acc*100:.2f}%"
     print(f"  [OK] MT-Bench zero-shot transfer accuracy verified: {mt_acc*100:.2f}% (above 38.54% floor)")
 
-    print("\n  >>> [PASS] ALL MANUSCRIPT CLAIMS PROGRAMMATICALLY VERIFIED <<<")
+    # 6. Table 4 Backbone coverage check
+    t4 = data.get("table4_architectures", [])
+    t4_models = [r["model"] for r in t4]
+    t4_seeds = [r.get("seeds", 1) for r in t4]
+    all_3_seeds = all(s >= 3 for s in t4_seeds) if t4 else False
+    if len(t4) == 4 and all_3_seeds:
+        print(f"  [OK] Table 4 complete: all 4 backbones verified across >=3 seeds")
+    else:
+        msg = f"Table 4 has {len(t4)}/4 backbones ({t4_models}), seeds={t4_seeds} (needs 4 backbones × 3 seeds)"
+        if strict:
+            raise AssertionError(f"Strict verification failed: {msg}")
+        print(f"  [PENDING HPC RUNS] {msg}")
+
+    # 7. Data efficiency coverage check
+    de = data.get("data_efficiency", [])
+    if isinstance(de, dict):
+        de = [de]
+    if len(de) >= 4:
+        print(f"  [OK] Data efficiency curve complete: {len(de)} points verified")
+    else:
+        msg = f"Data efficiency has {len(de)}/4 points (needs 10%, 30%, 60%, 100%)"
+        if strict:
+            raise AssertionError(f"Strict verification failed: {msg}")
+        print(f"  [PENDING HPC RUNS] {msg}")
+
+    if len(t4) == 4 and all_3_seeds and len(de) >= 4:
+        print("\n  >>> [PASS] ALL MANUSCRIPT CLAIMS PROGRAMMATICALLY VERIFIED <<<")
+    else:
+        print("\n  >>> [PARTIAL PASS] CORE CLAIMS 1-5 VERIFIED; TABLE 4 & 7 PENDING HPC COMPLETION <<<")
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Reproducibility Suite: APIN-D-26-05359")
+    parser.add_argument("--strict", action="store_true", help="Fail with AssertionError if any backbone or seed is missing")
+    args = parser.parse_args()
+
     print("=" * 80)
     print("  REPRODUCIBILITY SUITE: APIN-D-26-05359")
     print("  Paper: 'Efficient LLM Preference Classification Through Position Bias")
@@ -227,9 +284,10 @@ def main():
     reproduce_table5_position_bias(data)
     reproduce_table6_calibration(data)
     reproduce_table4_architectures(data)
+    reproduce_data_efficiency(data)
     reproduce_table7_ablation(data)
     reproduce_generalization(data)
-    verify_claims(data)
+    verify_claims(data, strict=args.strict)
 
 
 if __name__ == "__main__":
