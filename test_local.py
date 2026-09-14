@@ -248,6 +248,8 @@ print("=" * 70)
 print("8. Manifest / cost model")
 G3 = dict(G)
 G3["find_existing"] = lambda rid: None
+G3["preset_location"] = lambda p: p
+G3["KAGGLE_RUN_TYPE"] = "Interactive"
 # PRESET_COST/PRESET_FAMILY/ARCH_PRESETS live in the tokenization cell, which needs Keras.
 # Take just the module-level constants.
 _tokcell = cell_with("PRESET_FAMILY = {")

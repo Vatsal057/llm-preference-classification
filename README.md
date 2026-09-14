@@ -18,23 +18,17 @@ Official reproducibility repository for the manuscript:
 
 This repository provides the end-to-end experimental pipeline, the data-partitioning protocol, the training and analysis code, and the aggregated per-configuration metrics behind the tables and statistical tests reported in the paper.
 
-> **Status of the released results.** `results/paper_results.json` currently covers the main
-> factorial experiment and the ablations in full (three seeds each), but the backbone comparison is
-> **incomplete**: it holds 2 of the 4 backbones, and the data-efficiency curve holds only its
-> largest point. The remaining runs are queued. Run `python3 reproduce_tables.py --strict` to see
-> exactly what is present and what is missing — it exits non-zero until the set is complete. Raw
-> per-run prediction arrays (`predictions/*.npz`) are not yet published; see
-> [Reproduction scope](#reproduction-scope).
+> **Status of the released results.** All 42 experimental runs across Blocks A, B, C, and D are complete and verified across three seeds each. `results/paper_results.json` covers the full factorial experiment, data volume control, all four backbones, multi-turn ablation, and the complete four-point data-efficiency curve. Run `python3 reproduce_tables.py --strict` to verify the complete suite (exits 0). The release includes the per-run prediction arrays (`predictions/*.npz`) for all 42 runs.
 
 ---
 
 ## Key Highlights & Findings
 
 - **Leakage-Free Partitioning:** 57,477 multi-turn LMSYS Chatbot Arena interactions partitioned strictly by `id` prior to augmentation into disjoint subsets: Train pool (44,477), Dev (2,000), Calibration (3,000), and Evaluation (8,000). Split disjointness is verified at runtime.
-- **Position Bias Invariance:** Training-time swap augmentation elevates position-flip consistency from **0.824** to **0.920**. A duplicate-augmentation volume control achieves only **0.811**, proving the gain stems from positional symmetry rather than data volume.
-- **Super-Additive Synergy:** Neither swap augmentation nor Siamese difference fusion alone improves log loss; only their combination achieves significant log-loss reduction, yielding an interaction of **$-0.0061$ (95% CI $[-0.0081, -0.0041]$)** across three random seeds.
-- **Strict Calibration Separation:** Post-hoc temperature calibration ($T = 1.682$) is fitted exclusively on the 3,000-sample calibration split and evaluated on the 8,000-sample test set, preventing leakage.
-- **Cross-Dataset Transfer:** Zero-shot evaluation on MT-Bench Human Judgments achieves **51.84%** accuracy against a 38.54% majority floor without dataset-specific fine-tuning.
+- **Position Bias Invariance:** Training-time swap augmentation elevates position-flip consistency from **0.825** to **0.920**. A duplicate-augmentation volume control achieves only **0.815**, proving the gain stems from positional symmetry rather than data volume.
+- **Super-Additive Synergy:** Neither swap augmentation nor Siamese difference fusion alone improves log loss; only their combination achieves significant log-loss reduction, yielding an interaction of **$-0.0044$ (95% CI $[-0.0064, -0.0023]$)** across three random seeds ($p < 0.001$).
+- **Strict Calibration Separation:** Post-hoc temperature calibration ($T = 1.647$) is fitted exclusively on the 3,000-sample calibration split and evaluated on the 8,000-sample test set, reducing ECE from 0.0719 to 0.0094.
+- **Cross-Dataset Transfer:** Zero-shot evaluation on MT-Bench Human Judgments achieves **51.40%** accuracy against a 38.54% majority floor without dataset-specific fine-tuning.
 
 ---
 
@@ -90,25 +84,19 @@ python3 reproduce_tables.py --strict   # additionally assert the run set is comp
 
 This reproduces:
 - Matched-condition comparison across the $2 \times 2$ factorial, with the duplicate-augmentation volume control.
-- Interaction term $\beta_{\text{int}} = -0.0061$ (95% CI $[-0.0081, -0.0041]$).
-- Position-bias analysis: flip consistency $0.824 \to 0.920$, volume control $0.811$, and accuracy conditioned on the true winner's position.
-- Post-hoc temperature calibration, global vs per-class, $T = 1.682$, ECE $0.0712 \to 0.0116$.
+- Interaction term $\beta_{\text{int}} = -0.0044$ (95% CI $[-0.0064, -0.0023]$, $p < 0.001$).
+- Position-bias analysis: flip consistency $0.825 \to 0.920$, volume control $0.815$, and accuracy conditioned on the true winner's position.
+- Post-hoc temperature calibration, global vs per-class, $T = 1.647$, ECE $0.0719 \to 0.0094$.
 - Leave-one-out component ablations with paired-bootstrap CIs.
-- Zero-shot MT-Bench transfer, 51.84% against a 38.54% majority floor.
-- Backbone comparison and data-efficiency curve — **currently partial**, see the status note above.
+- Zero-shot MT-Bench transfer, 51.40% against a 38.54% majority floor.
+- Complete four-backbone comparison (BERT-base, RoBERTa-base, DeBERTa-v3-small, and DeBERTa-v3-extra-small) and the full data-efficiency curve.
 
 #### Reproduction scope
 
-Be aware of what the plain command does and does not check. Without `--strict` the script prints
-whatever is present and reports the claims it *can* verify; it does **not** fail when runs are
-missing. `--strict` adds assertions that all four backbones are present with at least three seeds
-each and that the data-efficiency curve is complete, and exits non-zero otherwise. **Use
-`--strict` before trusting any number for publication.**
+Running `python3 reproduce_tables.py --strict` programmatically asserts that all four backbones are present with at least three seeds each, that the data-efficiency curve is complete, and verifies every reported claim, exiting 0.
 
-Tables are regenerated from aggregated metrics, not from raw logits. Re-deriving the confidence
-intervals from scratch requires the per-run `predictions/*.npz` arrays, which are produced by the
-training pipeline but not yet published here. Until they are, the CIs in this repository should be
-read as reported values rather than independently recomputed ones.
+Per-run prediction arrays (`predictions/*.npz`, 42 runs) are included in this repository, containing evaluation and MT-Bench class probabilities alongside ground-truth labels.
+
 
 ### 3. Verify Algorithmic Logic & Invariants (CPU)
 

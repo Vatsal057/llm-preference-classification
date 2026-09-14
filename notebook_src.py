@@ -187,7 +187,9 @@ class CFG:
     # The smoke path has been validated end to end (all four backbones, both tokenizer variants,
     # every block boundary), so this now defaults to the real run. Set it back to True only if you
     # change the pipeline and want to re-verify cheaply.
-    SMOKE_TEST = False
+    # Override with SMOKE_TEST=1 in the environment so a dry run needs no edit to this file
+    # (editing it and forgetting to revert is how a meaningless run ends up in the results).
+    SMOKE_TEST = bool(int(os.environ.get("SMOKE_TEST", "0")))
     TRAIN_N = 12000            # training rows drawn from the pool (None = use the whole pool)
     ARCH_TRAIN_N = 5000        # Block C only -- see the note in section 8
     EPOCHS = 3
@@ -841,15 +843,14 @@ def cached_tokens(name, df, preset, seq_len, multiturn):
 ARCH_PRESETS = [CFG.MAIN_PRESET, "bert_base_en_uncased", "roberta_base_en", "deberta_v3_small_en"]
 
 # ------------------------------------------------------------------ preflight: are presets available?
+# Informational for every backbone the notebook *can* train. The hard failure is deferred to
+# section 8, once the manifest is known, because a preset is only actually required if some run
+# that still needs training uses it. Failing here on all four would block a session that only has
+# Block A left to do -- the backbone runs being already complete and their presets never loaded.
 _missing_presets = preset_report(ARCH_PRESETS)
-if _missing_presets and KAGGLE_RUN_TYPE == "Batch":
-    raise RuntimeError(
-        "\n\n  This is a committed (Save & Run All) session, which is not allowed to download\n"
-        "  Kaggle Models. The presets listed above must be attached as inputs first:\n\n"
-        + "".join(f"    + Add Input -> Models -> search '{PRESET_KAGGLE_MODEL.get(p, p)}'\n"
-                 f"      -> framework Keras -> variation '{p}' -> Add\n"
-                 for p in _missing_presets)
-        + "\n  Failing now rather than hours into training.\n")
+if _missing_presets:
+    print("\n(informational only -- section 8 re-checks this against the runs that are actually"
+          "\n pending, and fails there if one of those presets is genuinely unavailable.)")
 
 # ------------------------------------------------------------------ report the separator token IDs (R1-Q2)
 _tk = get_preprocessor(CFG.MAIN_PRESET, CFG.SEQ_LEN)
@@ -1327,6 +1328,33 @@ def estimate_hours(runs):
 
 
 todo = [c for c in RUNS if find_existing(run_id_of(c)) is None]
+
+# ------------------------------------------------------------------ preset preflight, take two
+# Now that `todo` is known, require only the presets those runs will actually load. This is the
+# check that matters: it fails in seconds rather than hours into a session, but it does not block a
+# session whose remaining work needs a single backbone.
+_needed_presets = sorted({c["preset"] for c in todo})
+_blocking = [p for p in _needed_presets if preset_location(p) == p]
+if _blocking:
+    print("\nPresets required by the pending runs:")
+    for p in _needed_presets:
+        loc = preset_location(p)
+        print(f"  {p:<30}{'attached' if loc != p else 'NOT ATTACHED':<14}{loc}")
+    if KAGGLE_RUN_TYPE == "Batch":
+        raise RuntimeError(
+            "\n\n  This is a committed (Save & Run All) session, which cannot download Kaggle\n"
+            "  Models. These presets are needed by runs that still have to be trained:\n\n"
+            + "".join(f"    + Add Input -> Models -> search '{PRESET_KAGGLE_MODEL.get(p, p)}'\n"
+                      f"      -> framework Keras -> variation '{p}' -> Add\n"
+                      for p in _blocking)
+            + "\n  Alternatively attach a dataset containing the preset directories; any directory\n"
+              "  holding a config.json is discovered automatically.\n\n"
+              "  Failing now rather than hours into training.\n")
+    print("  (interactive session: these will be downloaded on first use)")
+elif _needed_presets:
+    print(f"\npreset preflight OK -- all {len(_needed_presets)} preset(s) needed by pending runs "
+          f"are available locally")
+
 est = estimate_hours(todo)
 print(f"\nmanifest: {len(RUNS)} runs total, {len(todo)} not yet completed")
 print(f"{'block':<10}{'hours (est.)':>14}")

@@ -12,7 +12,7 @@ datasets/
 
 # Runtime directories & local artifacts
 failed/
-predictions/
+# predictions/ (tracked per journal reproducibility guidelines)
 tokcache/
 *.log
 
