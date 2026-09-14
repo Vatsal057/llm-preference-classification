@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Manuscript](https://img.shields.io/badge/Springer-Applied%20Intelligence-informational.svg)](https://link.springer.com/journal/10489)
 [![Reproducibility](https://img.shields.io/badge/reproducibility-verified-success.svg)](reproduce_tables.py)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22755372.svg)](https://doi.org/10.5281/zenodo.22755372)
 
 Official reproducibility repository for the manuscript:
 > **"Efficient LLM Preference Classification Through Position Bias Mitigation and Architectural Symmetry"**  
